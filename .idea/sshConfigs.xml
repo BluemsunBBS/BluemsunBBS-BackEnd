@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="43.138.11.219" id="42e0b704-5e66-45e5-b34c-79272722a377" keyPath="$PROJECT_DIR$/../../../secret key/腾讯云" port="52222" nameFormat="DESCRIPTIVE" username="root" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
