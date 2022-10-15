@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/context
@@ -10,7 +10,7 @@
        http://www.springframework.org/schema/mvc
        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-    <context:component-scan base-package="ink.wyy.controller"/>
+    <context:component-scan base-package="ink.wyy.*"/>
 
     <bean id="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper">
         <property name="serializationInclusion" value="NON_NULL"/>
@@ -24,5 +24,55 @@
             </bean>
         </mvc:message-converters>
     </mvc:annotation-driven>
+
+    <mvc:interceptors>
+        <bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor" />
+        <bean class="ink.wyy.interceptor.LoginInterceptor"/>
+        <bean class="ink.wyy.interceptor.AdminInterceptor"/>
+        <bean class="ink.wyy.interceptor.HostInterceptor"/>
+        <bean class="ink.wyy.interceptor.AuthorInterceptor"/>
+        <bean class="ink.wyy.interceptor.ReplyerInterceptor"/>
+    </mvc:interceptors>
+
+<!--    ——————————————————————————————————————————————-->
+
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--配置数据源-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="${jdbc.driver}"
+          p:url="${jdbc.url}"
+          p:username="${jdbc.username}"
+          p:password="${jdbc.password}"/>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+          p:configLocation="classpath:mybatis-config.xml"
+    >
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--
+        spring与mybatis整合配置，动态实现 mapper 接口，注入到 spring 容器中
+
+        1).注入sqlSessionFactory
+        2).给出需要扫描 mapper 接口包
+    -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
+          p:sqlSessionFactoryBeanName="sqlSessionFactory"
+          p:basePackage="ink.wyy.mapper"/>
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- 上传文件的最大尺寸 5M-->
+        <property name="maxUploadSize" value="20971520"/>
+    </bean>
+    <mvc:resources mapping="/images/**" location="/files/img/" />
+
+    <mvc:cors>
+        <mvc:mapping path="/**" />
+    </mvc:cors>
 
 </beans>
