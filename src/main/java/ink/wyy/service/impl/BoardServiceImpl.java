@@ -1,12 +1,10 @@
 package ink.wyy.service.impl;
 
-import ink.wyy.bean.APIResult;
-import ink.wyy.bean.Board;
-import ink.wyy.bean.Pager;
-import ink.wyy.bean.User;
+import ink.wyy.bean.*;
 import ink.wyy.mapper.BoardMapper;
 import ink.wyy.mapper.UserMapper;
 import ink.wyy.service.BoardService;
+import ink.wyy.service.NotificationService;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,11 +16,13 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardMapper boardMapper;
     private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     @Autowired
-    public BoardServiceImpl(BoardMapper boardMapper, UserMapper userMapper) {
+    public BoardServiceImpl(BoardMapper boardMapper, UserMapper userMapper, NotificationService notificationService) {
         this.boardMapper = boardMapper;
         this.userMapper = userMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -136,6 +136,12 @@ public class BoardServiceImpl implements BoardService {
             return APIResult.createNg("用户已是该板块主持人");
         }
         if (boardMapper.addHost(userId, boardId) == 1) {
+            Board board = getById(boardId);
+            notificationService.insert(new Notification(
+                    "system",
+                    "【用户权限变更通知】您已被设置为板块\"" + board.getName() + "\"的主持人。",
+                    userId
+            ));
             return APIResult.createOk("添加主持人成功");
         }
         deleteHost(userId, boardId);
@@ -156,6 +162,12 @@ public class BoardServiceImpl implements BoardService {
             return APIResult.createNg("板块id不能为空");
         }
         if (boardMapper.deleteHost(userId, boardId) == 1) {
+            Board board = getById(boardId);
+            notificationService.insert(new Notification(
+                    "system",
+                    "【用户权限变更通知】您已被取消板块\"" + board + "\"的主持人。",
+                    userId
+            ));
             return APIResult.createOk("撤销主持人成功");
         }
         return APIResult.createNg("该用户不是此板块主持人");

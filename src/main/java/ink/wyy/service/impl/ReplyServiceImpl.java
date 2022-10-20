@@ -1,12 +1,11 @@
 package ink.wyy.service.impl;
 
-import ink.wyy.bean.APIResult;
-import ink.wyy.bean.Article;
-import ink.wyy.bean.Pager;
-import ink.wyy.bean.Reply;
+import ink.wyy.bean.*;
 import ink.wyy.mapper.ReplyMapper;
 import ink.wyy.service.ArticleService;
+import ink.wyy.service.NotificationService;
 import ink.wyy.service.ReplyService;
+import ink.wyy.service.UserService;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,11 +17,18 @@ public class ReplyServiceImpl implements ReplyService {
 
     private final ReplyMapper replyMapper;
     private final ArticleService articleService;
+    private final NotificationService notificationService;
+    private final UserService userService;
 
     @Autowired
-    public ReplyServiceImpl(ReplyMapper replyMapper, ArticleService articleService) {
+    public ReplyServiceImpl(ReplyMapper replyMapper,
+                            ArticleService articleService,
+                            NotificationService notificationService,
+                            UserService userService) {
         this.replyMapper = replyMapper;
         this.articleService = articleService;
+        this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     @Override
@@ -86,9 +92,44 @@ public class ReplyServiceImpl implements ReplyService {
         if (reply.getUserId() == null || reply.getUserId().equals("")) {
             return APIResult.createNg("用户不能为空");
         }
+        Article article = null;
+        Reply reply1;
+        String repliedUserId = null;
+        if (reply.getArticleId() != null) {
+            article = articleService.getById(reply.getArticleId());
+            if (article == null) {
+                return APIResult.createNg("文章不存在");
+            }
+            repliedUserId = article.getUserId();
+        }
+        if (reply.getReplyId() != null) {
+            reply1 = replyMapper.getById(reply.getReplyId());
+            if (reply1 == null) {
+                return APIResult.createNg("回复不存在");
+            }
+            repliedUserId = reply1.getUserId();
+            article = articleService.getById(reply1.getArticleId());
+        }
+        if (article == null) {
+            return APIResult.createNg("文章不存在");
+        }
+        User user = userService.getById(reply.getUserId());
         reply.setId(UUIDUtil.get());
         try {
             if (replyMapper.insert(reply) == 1) {
+                String noticeText = "【新的回复】用户 @" + user.getUsername() + " 回复了你";
+                if (reply.getArticleId() != null) {
+                    noticeText += "的文章：《" + article.getTitle() + "》。";
+                } else {
+                    noticeText += "在文章：《" + article.getTitle() + "》中的回复。";
+                }
+                noticeText += "详情查看：<a href=\"http://bbs.wyy.ink/article/" + article.getId() + "\">" +
+                        article.getTitle() + "</a>";
+                notificationService.insert(new Notification(
+                        "reply",
+                        noticeText,
+                        repliedUserId
+                ));
                 return APIResult.createOk("回复成功");
             } else {
                 return APIResult.createNg("回复失败");

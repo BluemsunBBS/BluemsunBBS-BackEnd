@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return APIResult.createNg(e.getMessage());
         }
-        if (user == null) return null;
+        if (user == null) return APIResult.createNg("用户名或密码错误");
         if (user.getPassword().equals(MD5Util.getMD5Str(password, "BluemsunBBS"))) {
             user.setPassword(null);
             String token = JWTUtil.createToken(user);
@@ -58,6 +58,7 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return APIResult.createNg(e.getMessage());
         }
+        user.setPassword(null);
         String token = JWTUtil.createToken(user);
         return APIResult.createOk(token);
     }
@@ -73,23 +74,26 @@ public class UserServiceImpl implements UserService {
         if (old == null) {
             return null;
         }
-        if (user.getNickname() != null) {
+        if (user.getNickname() != null && !user.getNickname().equals("")) {
             old.setNickname(user.getNickname());
         }
-        if (user.getPassword() != null) {
+        if (user.getPassword() != null && !"".equals(user.getPassword())) {
             old.setPassword(MD5Util.getMD5Str(user.getPassword(), "BluemsunBBS"));
         }
-        if (user.getPhone() != null) {
+        if (user.getPhone() != null && !"".equals(user.getPhone())) {
             old.setPhone(user.getPhone());
         }
-        if (user.getGender() != null) {
+        if (user.getGender() != null && !"".equals(user.getGender())) {
             old.setGender(user.getGender());
         }
-        if (user.getRealname() != null) {
+        if (user.getRealname() != null && !"".equals(user.getRealname())) {
             old.setRealname(user.getRealname());
         }
         if (user.getRole() != 0) {
             old.setRole(user.getRole());
+        }
+        if (user.getAvatarUri() != null && !"".equals(user.getAvatarUri())) {
+            old.setAvatarUri(user.getAvatarUri());
         }
         try {
             if (userMapper.updateById(old) == 1) {

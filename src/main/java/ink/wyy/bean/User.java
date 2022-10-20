@@ -18,7 +18,17 @@ public class User {
     private String realname;
     @JsonProperty("create_time")
     private Date createTime;
+    @JsonProperty("avatar_uri")
+    private String avatarUri;
     private int ban;
+
+    public String getAvatarUri() {
+        return avatarUri;
+    }
+
+    public void setAvatarUri(String avatarUri) {
+        this.avatarUri = avatarUri;
+    }
 
     public int getBan() {
         return ban;

@@ -1,30 +1,31 @@
 package ink.wyy.service.impl;
 
-import ink.wyy.bean.APIResult;
-import ink.wyy.bean.Article;
-import ink.wyy.bean.Board;
-import ink.wyy.bean.Pager;
+import ink.wyy.bean.*;
 import ink.wyy.mapper.ArticleMapper;
-import ink.wyy.mapper.BoardMapper;
 import ink.wyy.service.ArticleService;
+import ink.wyy.service.BoardService;
+import ink.wyy.service.NotificationService;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
 import java.util.Date;
 import java.util.List;
 
 @Service
 public class ArticleServiceImpl implements ArticleService {
 
-    private final BoardMapper boardMapper;
+    private final BoardService boardService;
     private final ArticleMapper articleMapper;
+    private final NotificationService notificationService;
 
     @Autowired
-    public ArticleServiceImpl(BoardMapper boardMapper, ArticleMapper articleMapper) {
-        this.boardMapper = boardMapper;
+    public ArticleServiceImpl(BoardService boardService,
+                              ArticleMapper articleMapper,
+                              NotificationService notificationService) {
+        this.boardService = boardService;
         this.articleMapper = articleMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (pager.getPage() == 0) pager.setPage(1);
         Board board;
         try {
-            board = boardMapper.getById(boardId);
+            board = boardService.getById(boardId);
         } catch (Exception e) {
             return null;
         }
@@ -69,9 +70,17 @@ public class ArticleServiceImpl implements ArticleService {
         try {
             if (articleMapper.insert(article) == 1) {
                 article = articleMapper.getById(article.getId());
-                Board board = boardMapper.getById(article.getBoardId());
+                Board board = boardService.getById(article.getBoardId());
                 board.setUpdateTime(new Date());
-                boardMapper.update(board);
+                List<User> hostList = (List<User>) boardService.getHostList(board.getId()).getData();
+                for (User user : hostList) {
+                    notificationService.insert(new Notification(
+                            "system",
+                            "【文章审核通知】板块\"" + board.getName() + "\" 新文章《" + article.getTitle() + "》发布了，请注意查看。",
+                            user.getId()
+                    ));
+                }
+                boardService.update(board);
                 return APIResult.createOk(article);
             } else {
                 return APIResult.createNg("发布失败");
@@ -107,7 +116,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (article.getBoardId() != null && !article.getBoardId().equals("")) {
             Board board;
             try {
-                board = boardMapper.getById(article.getBoardId());
+                board = boardService.getById(article.getBoardId());
             } catch (Exception e) {
                 return APIResult.createNg("板块不存在");
             }
@@ -118,9 +127,9 @@ public class ArticleServiceImpl implements ArticleService {
         }
         try {
             if (articleMapper.update(old) == 1) {
-                Board board = boardMapper.getById(old.getBoardId());
+                Board board = boardService.getById(old.getBoardId());
                 board.setUpdateTime(new Date());
-                boardMapper.update(board);
+                boardService.update(board);
                 return APIResult.createOk("更新成功");
             } else {
                 return APIResult.createNg("更新失败");
@@ -156,7 +165,7 @@ public class ArticleServiceImpl implements ArticleService {
         }
         Board board;
         try {
-            board = boardMapper.getById(boardId);
+            board = boardService.getById(boardId);
         } catch (Exception e) {
             return null;
         }

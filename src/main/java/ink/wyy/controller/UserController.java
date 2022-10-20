@@ -46,6 +46,9 @@ public class UserController {
         if (cuser.getRole() != 0 && user.getRole() != 2) {
             return APIResult.createNg("您没有权限执行此操作");
         }
+        if (cuser.getLevel() != 0 && user.getRole() != 2) {
+            return APIResult.createNg("您没有权限执行此操作");
+        }
         cuser.setId(id);
         user = userServiceImpl.update(cuser);
         if (user == null) {

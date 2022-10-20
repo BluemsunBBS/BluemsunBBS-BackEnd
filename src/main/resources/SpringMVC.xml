@@ -72,7 +72,11 @@
     <mvc:resources mapping="/images/**" location="/files/img/" />
 
     <mvc:cors>
-        <mvc:mapping path="/**" />
+        <mvc:mapping
+            path="/**"
+            allowed-methods="*"
+            allowed-headers="*"
+        />
     </mvc:cors>
 
 </beans>

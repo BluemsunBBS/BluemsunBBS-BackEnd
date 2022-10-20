@@ -15,14 +15,15 @@ public interface UserMapper {
     @Select("select COUNT(1) from tb_user where ban=0")
     int count() throws Exception;
 
-    @Insert("insert into tb_user (id, username, nickname, password, role, level, phone, gender, realname, create_time)" +
+    @Insert("insert into tb_user (id, username, nickname, password, role, " +
+            "level, phone, gender, realname, avatar_uri, create_time)" +
             "values(#{id}, #{username}, #{nickname}, #{password}," +
-            " 1, 1, #{phone}, #{gender}, #{realname}, NOW())")
+            " 1, 1, #{phone}, #{gender}, #{realname}, #{avatarUri}, NOW())")
     int insert(User user) throws Exception;
 
     @Update("update tb_user set username=#{username}, nickname=#{nickname}," +
             "password=#{password}, role=#{role}, level=#{level}, phone=#{phone}," +
-            "gender=#{gender}, realname=#{realname} " +
+            "gender=#{gender}, realname=#{realname}, avatar_uri=#{avatarUri} " +
             "where id=#{id} and ban=0")
     int updateById(User user) throws Exception;
 
