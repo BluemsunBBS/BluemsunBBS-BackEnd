@@ -11,6 +11,7 @@ public class Reply {
 
     private String id;
     private String text;
+    private User user;
     @JsonProperty("user_id")
     private String userId;
     @JsonProperty("article_id")
@@ -21,6 +22,14 @@ public class Reply {
     private Date replyTime;
 
     private List<Reply> replies;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getReplyId() {
         return replyId;
@@ -54,12 +63,12 @@ public class Reply {
         this.text = text;
     }
 
-    public String getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getArticleId() {
@@ -70,7 +79,7 @@ public class Reply {
         this.articleId = articleId;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getReplyTime() {
         return replyTime;
     }

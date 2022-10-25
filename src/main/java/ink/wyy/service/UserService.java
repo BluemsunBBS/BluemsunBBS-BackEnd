@@ -10,5 +10,7 @@ public interface UserService {
 
     Pager<User> getList(Pager<User> pager);
 
+    Pager<User> searchByNickname(String key, Pager<User> pager);
+
     User getById(String id);
 }

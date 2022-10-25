@@ -16,6 +16,9 @@ public interface BoardMapper {
     @Select("select * from tb_board where name like #{name} limit #{pager.begin},#{pager.size}")
     List<Board> find(@Param("name") String name, @Param("pager") Pager<Board> pager) throws Exception;
 
+    @Select("select COUNT(1) from tb_board where name like #{name}")
+    int countByName(String name) throws Exception;
+
     @Insert("insert into tb_board (id, name, img, description, create_time, update_time) values " +
             "(#{id}, #{name}, #{img}, #{description}, NOW(), NOW())")
     int insert(Board board) throws Exception;

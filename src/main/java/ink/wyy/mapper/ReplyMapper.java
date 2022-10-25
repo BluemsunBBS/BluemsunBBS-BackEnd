@@ -9,7 +9,7 @@ import java.util.List;
 @Mapper
 public interface ReplyMapper {
 
-    @Select("select * from tb_reply where article_id=#{id}" +
+    @Select("select * from tb_reply where article_id=#{id} " +
             "order by reply_time limit #{p.begin},#{p.size}")
     List<Reply> selectByArticle(@Param("id") String articleId,
                                 @Param("p") Pager<Reply> pager) throws Exception;

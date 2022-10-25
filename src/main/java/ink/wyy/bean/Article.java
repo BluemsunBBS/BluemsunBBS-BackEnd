@@ -17,12 +17,51 @@ public class Article {
     private String boardId;
     @JsonProperty("user_id")
     private String userId;
+    @JsonProperty("like")
+    private Integer countLike;
+    @JsonProperty("reply")
+    private Integer countReply;
+    @JsonProperty("is_like")
+    private Boolean isLike;
+    private String nickname;
     @JsonProperty("create_time")
     private Date createTime;
     @JsonProperty("update_time")
     private Date updateTime;
     private int visits;
     private Integer top;
+
+    public Boolean getIsLike() {
+        return isLike;
+    }
+
+    public void setIsLike(Boolean like) {
+        isLike = like;
+    }
+
+    public Integer getCountLike() {
+        return countLike;
+    }
+
+    public void setCountLike(Integer countLike) {
+        this.countLike = countLike;
+    }
+
+    public Integer getCountReply() {
+        return countReply;
+    }
+
+    public void setCountReply(Integer countReply) {
+        this.countReply = countReply;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
 
     public Integer getTop() {
         return top;
@@ -88,7 +127,7 @@ public class Article {
         this.userId = userId;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getCreateTime() {
         return createTime;
     }
@@ -97,7 +136,7 @@ public class Article {
         this.createTime = createTime;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getUpdateTime() {
         return updateTime;
     }

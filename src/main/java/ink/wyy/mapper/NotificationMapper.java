@@ -32,6 +32,10 @@ public interface NotificationMapper {
     @Select("select COUNT(1) from tb_notification where user_id=#{userId}")
     int count(String userId);
 
+    @Select("select COUNT(1) from tb_notification where user_id=#{userId} " +
+            "and category=#{category}")
+    int countByCategory(@Param("userId") String userId, @Param("category") String category);
+
     @Select("select COUNT(1) from tb_notification where user_id=#{userId} and is_read=#{read}")
     int countByRead(String userId, boolean read);
 }

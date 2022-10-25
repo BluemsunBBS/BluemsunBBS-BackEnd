@@ -7,6 +7,8 @@ import ink.wyy.bean.Article;
 import ink.wyy.bean.Pager;
 import ink.wyy.bean.User;
 import ink.wyy.service.ArticleService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 @LoginAuth
 public class ArticleController {
 
+    static Logger logger = LogManager.getLogger();
     private final ArticleService articleService;
 
     @Autowired
@@ -54,8 +57,14 @@ public class ArticleController {
 
     @GetMapping("/{articleId}")
     @LoginAuth(value = false)
-    public APIResult getArticle(@PathVariable("articleId") String id) {
-        Article article = articleService.getById(id);
+    public APIResult getArticle(@PathVariable("articleId") String id,
+                                HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        String userId = "";
+        if (user != null) {
+            userId = user.getId();
+        }
+        Article article = articleService.getById(id, userId);
         if (article == null) {
             return APIResult.createNg("帖子不存在");
         }
@@ -63,8 +72,10 @@ public class ArticleController {
         return APIResult.createOk(article);
     }
 
-    public APIResult getList(String boardId, Pager<Article> pager, String order) {
-        pager = articleService.getList(boardId, pager, order);
+    public APIResult getList(String boardId, Pager<Article> pager, String order, HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        String userId = user != null ? user.getId() : "";
+        pager = articleService.getList(boardId, pager, order, userId);
         if (pager == null) {
             return APIResult.createNg("获取列表失败");
         }
@@ -76,11 +87,14 @@ public class ArticleController {
     public APIResult findByTitle(String title,
                                  @PathVariable("boardId") String boardId,
                                  Pager<Article> pager,
-                                 String order) {
+                                 String order,
+                                 HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        String userId = user != null ? user.getId() : "";
         if (title == null || title.equals("")) {
-            return getList(boardId, pager, order);
+            return getList(boardId, pager, order, request);
         }
-        pager = articleService.findByTitle(title, boardId, pager, order);
+        pager = articleService.findByTitle(title, boardId, pager, order, userId);
         if (pager == null) {
             return APIResult.createNg("搜索失败");
         }
@@ -89,8 +103,10 @@ public class ArticleController {
 
     @GetMapping("/list")
     @LoginAuth(value = false)
-    public APIResult findAll(String title, Pager<Article> pager, String order) {
-        pager = articleService.findAll(title, pager, order);
+    public APIResult findAll(String title, Pager<Article> pager, String order, HttpServletRequest request) {
+        User user = (User) request.getAttribute("user");
+        String userId = user != null ? user.getId() : "";
+        pager = articleService.findAll(title, pager, order, userId);
         if (pager == null) {
             return  APIResult.createNg("搜索失败");
         }

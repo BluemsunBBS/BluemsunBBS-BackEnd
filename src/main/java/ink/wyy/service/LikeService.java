@@ -14,4 +14,6 @@ public interface LikeService {
     APIResult unlike(String userId, String articleId);
 
     boolean check(String userId, String articleId);
+
+    int countArticle(String articleId);
 }

@@ -7,6 +7,7 @@ import ink.wyy.mapper.UserMapper;
 import ink.wyy.service.UserService;
 import ink.wyy.util.JWTUtil;
 import ink.wyy.util.MD5Util;
+import ink.wyy.util.RedisUtil;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -131,6 +132,25 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public Pager<User> searchByNickname(String key, Pager<User> pager) {
+        if (pager.getPage() == 0) pager.setPage(1);
+        if (pager.getSize() == 0) pager.setSize(20);
+        if (key == null) key = "%%";
+        else key = '%' + key + '%';
+        try {
+            List<User> list = userMapper.searchByNickname(key, pager);
+            for (User user : list) {
+                user.setPassword(null);
+            }
+            pager.setTotal(userMapper.countByNickname(key));
+            pager.setRows(list);
+            return pager;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Pager<User> getBanList(Pager<User> pager) {
         if (pager.getPage() == 0) pager.setPage(1);
         if (pager.getSize() == 0) pager.setSize(20);
@@ -138,6 +158,11 @@ public class UserServiceImpl implements UserService {
             List<User> list = userMapper.selectBan(pager);
             for (User user : list) {
                 user.setPassword(null);
+                user.setPhone(null);
+                user.setRealname(null);
+                user.setRole(0);
+                user.setCreateTime(null);
+                user.setUsername(null);
             }
             pager.setTotal(userMapper.countBan());
             pager.setRows(list);

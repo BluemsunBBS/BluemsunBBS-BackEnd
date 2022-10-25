@@ -17,7 +17,7 @@ public interface ArticleMapper {
                                 @Param("order") String order) throws Exception;
 
     @Insert("insert into tb_article (id, title, text, files, board_id, user_id, top, create_time, update_time)" +
-            "values(#{id}, #{title}, #{text}, #{files}, #{boardId}, #{userId}, #{top}, NOW(), NOW())")
+            "values(#{id}, #{title}, #{text}, #{files}, #{boardId}, #{userId}, 0, NOW(), NOW())")
     int insert(Article article) throws Exception;
 
     @Delete("delete from tb_article where id=#{id}")

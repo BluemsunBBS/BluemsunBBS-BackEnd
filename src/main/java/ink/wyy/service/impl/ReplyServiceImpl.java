@@ -45,11 +45,15 @@ public class ReplyServiceImpl implements ReplyService {
                 return null;
             }
             Pager<Reply> sonPager = new Pager<>();
-            sonPager.setSize(2);
+            sonPager.setSize(99);
             sonPager.setPage(1);
             for (Reply r : list) {
+                r.setUser(userService.getById(r.getUserId()));
                 List<Reply> sonList = replyMapper.selectByReply(r.getId(), sonPager);
                 if (sonList != null) {
+                    for (Reply r2 : sonList) {
+                        r2.setUser(userService.getById(r2.getUserId()));
+                    }
                     r.setReplies(sonList);
                 }
             }
@@ -73,6 +77,9 @@ public class ReplyServiceImpl implements ReplyService {
             List<Reply> list = replyMapper.selectByReply(replyId, pager);
             if (list == null) {
                 return null;
+            }
+            for (Reply r : list) {
+                r.setUser(userService.getById(r.getUserId()));
             }
             pager.setRows(list);
             pager.setTotal(replyMapper.count(replyId));
@@ -123,7 +130,7 @@ public class ReplyServiceImpl implements ReplyService {
                 } else {
                     noticeText += "在文章：《" + article.getTitle() + "》中的回复。";
                 }
-                noticeText += "详情查看：<a href=\"http://bbs.wyy.ink/article/" + article.getId() + "\">" +
+                noticeText += "详情查看：<a href=\"/article/" + article.getId() + "\">" +
                         article.getTitle() + "</a>";
                 notificationService.insert(new Notification(
                         "reply",
@@ -161,9 +168,17 @@ public class ReplyServiceImpl implements ReplyService {
             return null;
         }
         try {
-            return replyMapper.getById(id);
+            Reply reply = replyMapper.getById(id);
+            if (reply == null) return null;
+            reply.setUser(userService.getById(reply.getUserId()));
+            return reply;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public int countByArticle(String articleId) {
+        return replyMapper.count(articleId);
     }
 }

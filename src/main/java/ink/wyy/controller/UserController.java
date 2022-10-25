@@ -22,15 +22,18 @@ public class UserController {
     }
 
     @GetMapping("/account/{id}")
-    @LoginAuth
     public APIResult getUserInfo(@PathVariable("id") String id, HttpServletRequest request) {
         User user = (User) request.getAttribute("user");
-        if (!user.getId().equals(id) && user.getRole() != 2) {
-            return APIResult.createNg("您没有权限执行此操作");
-        }
         user = userServiceImpl.getById(id);
         if (user == null) {
             return APIResult.createNg("用户不存在");
+        }
+        if (!user.getId().equals(id) && user.getRole() != 2) {
+            user.setPhone(null);
+            user.setRealname(null);
+            user.setRole(0);
+            user.setCreateTime(null);
+            user.setUsername(null);
         }
         return APIResult.createOk(user);
     }
@@ -63,6 +66,16 @@ public class UserController {
         Pager<User> pager1 = userServiceImpl.getList(pager);
         if (pager1 != null) {
             return APIResult.createOk(pager1);
+        } else {
+            return APIResult.createNg("获取失败");
+        }
+    }
+
+    @GetMapping("/account/search")
+    public APIResult searchByNickname(String key, Pager<User> pager) {
+        pager = userServiceImpl.searchByNickname(key, pager);
+        if (pager != null) {
+            return APIResult.createOk(pager);
         } else {
             return APIResult.createNg("获取失败");
         }

@@ -1,14 +1,18 @@
 package ink.wyy.service.impl;
 
-import ink.wyy.bean.APIResult;
-import ink.wyy.bean.Pager;
+import ink.wyy.bean.*;
 import ink.wyy.mapper.FollowMapper;
 import ink.wyy.service.FollowService;
+import ink.wyy.service.NotificationService;
+import ink.wyy.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 板块关注服务
+ */
 @Service
 public class FollowServiceImpl implements FollowService {
 
@@ -19,9 +23,17 @@ public class FollowServiceImpl implements FollowService {
         this.followMapper = followMapper;
     }
 
+    /**
+     * 通过用户id获取关注板块id列表
+     * @param userId
+     * @param pager
+     * @return
+     */
     @Override
-    public Pager<String> getListByUser(String userId, Pager<String> pager) {
-        List<String> list = followMapper.getListByUser(userId, pager);
+    public Pager<Board> getListByUser(String userId, Pager<Board> pager) {
+        if (pager.getSize() == 0) pager.setSize(20);
+        if (pager.getPage() == 0) pager.setPage(1);
+        List<Board> list = followMapper.getListByUser(userId, pager);
         if (list == null) {
             return null;
         }
@@ -30,9 +42,17 @@ public class FollowServiceImpl implements FollowService {
         return pager;
     }
 
+    /**
+     * 通过板块id获取关注其用户id列表
+     * @param boardId
+     * @param pager
+     * @return
+     */
     @Override
-    public Pager<String> getListByBoard(String boardId, Pager<String> pager) {
-        List<String> list = followMapper.getListByBoard(boardId, pager);
+    public Pager<User> getListByBoard(String boardId, Pager<User> pager) {
+        if (pager.getSize() == 0) pager.setSize(20);
+        if (pager.getPage() == 0) pager.setPage(1);
+        List<User> list = followMapper.getListByBoard(boardId, pager);
         if (list == null) {
             return null;
         }
@@ -41,6 +61,12 @@ public class FollowServiceImpl implements FollowService {
         return pager;
     }
 
+    /**
+     * 关注板块
+     * @param userId
+     * @param articleId
+     * @return
+     */
     @Override
     public APIResult follow(String userId, String articleId) {
         if (check(userId, articleId)) {
@@ -52,6 +78,12 @@ public class FollowServiceImpl implements FollowService {
         return APIResult.createNg("关注失败");
     }
 
+    /**
+     * 取消关注板块
+     * @param userId
+     * @param articleId
+     * @return
+     */
     @Override
     public APIResult unfollow(String userId, String articleId) {
         if (!check(userId, articleId)) {
@@ -63,6 +95,12 @@ public class FollowServiceImpl implements FollowService {
         return APIResult.createNg("取消关注失败");
     }
 
+    /**
+     * 检查是否关注板块
+     * @param userId
+     * @param boardId
+     * @return
+     */
     @Override
     public boolean check(String userId, String boardId) {
         return followMapper.check(userId, boardId) > 0;

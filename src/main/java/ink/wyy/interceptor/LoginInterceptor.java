@@ -23,6 +23,14 @@ public class LoginInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (handler.getClass().isAssignableFrom(HandlerMethod.class)) {
+            User user = null;
+            String token = request.getHeader("token");
+            if (token != null && !token.equals("")) {
+                user = JWTUtil.parseToken(token, User.class);
+                if (user != null) {
+                    request.setAttribute("user", user);
+                }
+            }
             LoginAuth loginAuth = ((HandlerMethod) handler).getMethodAnnotation(LoginAuth.class);
             if (loginAuth == null) {
                 loginAuth = ((HandlerMethod) handler).getBean().getClass().getAnnotation(LoginAuth.class);
@@ -30,13 +38,6 @@ public class LoginInterceptor implements HandlerInterceptor {
             if (loginAuth == null || !loginAuth.value()) {
                 return true;
             } else {
-                String token = request.getHeader("token");
-                if (token == null || token.equals("")) {
-                    PrintWriter writer = response.getWriter();
-                    writer.print(JSONUtil.toJSONString(APIResult.createNg("未登录")));
-                    return false;
-                }
-                User user = JWTUtil.parseToken(token, User.class);
                 if (user != null) {
                     user = userService.getById(user.getId());
                     request.setAttribute("user", user);

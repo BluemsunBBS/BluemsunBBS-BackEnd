@@ -39,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
             List<Notification> list = notificationMapper.selectByUser(userId, category, pager);
             if (list == null) return null;
             pager.setRows(list);
-            pager.setTotal(notificationMapper.count(userId));
+            pager.setTotal(notificationMapper.countByCategory(userId, category));
             return pager;
         } catch (Exception e) {
             return null;

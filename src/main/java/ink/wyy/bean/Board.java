@@ -49,7 +49,7 @@ public class Board {
         this.description = description;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getCreateTime() {
         return createTime;
     }
@@ -58,7 +58,7 @@ public class Board {
         this.createTime = createTime;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getUpdateTime() {
         return updateTime;
     }

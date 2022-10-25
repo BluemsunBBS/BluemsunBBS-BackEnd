@@ -2,9 +2,10 @@ package ink.wyy.service.impl;
 
 import ink.wyy.bean.*;
 import ink.wyy.mapper.ArticleMapper;
-import ink.wyy.service.ArticleService;
-import ink.wyy.service.BoardService;
-import ink.wyy.service.NotificationService;
+import ink.wyy.mapper.LikeMapper;
+import ink.wyy.mapper.ReplyMapper;
+import ink.wyy.mapper.UserMapper;
+import ink.wyy.service.*;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,18 +19,32 @@ public class ArticleServiceImpl implements ArticleService {
     private final BoardService boardService;
     private final ArticleMapper articleMapper;
     private final NotificationService notificationService;
+    private final LikeMapper likeMapper;
+    private final ReplyMapper replyMapper;
+    private final UserMapper userMapper;
 
     @Autowired
     public ArticleServiceImpl(BoardService boardService,
                               ArticleMapper articleMapper,
-                              NotificationService notificationService) {
+                              NotificationService notificationService, LikeMapper likeMapper, ReplyMapper replyMapper, UserMapper userMapper) {
         this.boardService = boardService;
         this.articleMapper = articleMapper;
         this.notificationService = notificationService;
+        this.likeMapper = likeMapper;
+        this.replyMapper = replyMapper;
+        this.userMapper = userMapper;
     }
 
+    /**
+     * 获取文章列表
+     * @param boardId
+     * @param pager
+     * @param order
+     * @param userId
+     * @return
+     */
     @Override
-    public Pager<Article> getList(String boardId, Pager<Article> pager, String order) {
+    public Pager<Article> getList(String boardId, Pager<Article> pager, String order, String userId) {
         if (pager.getSize() == 0) pager.setSize(20);
         if (pager.getPage() == 0) pager.setPage(1);
         Board board;
@@ -47,6 +62,14 @@ public class ArticleServiceImpl implements ArticleService {
             }
             List<Article> list = articleMapper.selectByBoard(boardId, pager, order);
             if (list == null) return null;
+            if (userId != null) {
+                for (Article article : list) {
+                    article.setCountLike(likeMapper.countByArticleId(article.getId()));
+                    article.setCountReply(replyMapper.count(article.getId()));
+                    article.setNickname(userMapper.findById(article.getUserId()).getNickname());
+                    article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+                }
+            }
             pager.setRows(list);
             pager.setTotal(articleMapper.count(boardId));
             return pager;
@@ -55,6 +78,11 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 发布文章
+     * @param article
+     * @return
+     */
     @Override
     public APIResult insert(Article article) {
         if (article.getTitle() == null || article.getTitle().equals("")) {
@@ -90,6 +118,11 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 更新文章
+     * @param article
+     * @return
+     */
     @Override
     public APIResult update(Article article) {
         Article old;
@@ -139,6 +172,11 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 删除文章
+     * @param id
+     * @return
+     */
     @Override
     public APIResult delete(String id) {
         try {
@@ -153,10 +191,19 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 通过题目搜索某板块文章
+     * @param title
+     * @param boardId
+     * @param pager
+     * @param order
+     * @param userId
+     * @return
+     */
     @Override
-    public Pager<Article> findByTitle(String title, String boardId, Pager<Article> pager, String order) {
+    public Pager<Article> findByTitle(String title, String boardId, Pager<Article> pager, String order, String userId) {
         if (title == null || title.equals("")) {
-            return getList(boardId, pager, order);
+            return getList(boardId, pager, order, userId);
         }
         if (pager.getSize() == 0) pager.setSize(20);
         if (pager.getPage() == 0) pager.setPage(1);
@@ -178,6 +225,12 @@ public class ArticleServiceImpl implements ArticleService {
             if (list == null) {
                 return null;
             }
+            for (Article article : list) {
+                article.setCountLike(likeMapper.countByArticleId(article.getId()));
+                article.setCountReply(replyMapper.count(article.getId()));
+                article.setNickname(userMapper.findById(article.getUserId()).getNickname());
+                article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+            }
             pager.setTotal(articleMapper.countByTitle(boardId, title));
             pager.setRows(list);
             return pager;
@@ -186,8 +239,16 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 通过题目搜索所有文章
+     * @param title
+     * @param pager
+     * @param order
+     * @param userId
+     * @return
+     */
     @Override
-    public Pager<Article> findAll(String title, Pager<Article> pager, String order) {
+    public Pager<Article> findAll(String title, Pager<Article> pager, String order, String userId) {
         if (pager.getSize() == 0) pager.setSize(20);
         if (pager.getPage() == 0) pager.setPage(1);
         if (order == null || order.equals("")) {
@@ -199,6 +260,12 @@ public class ArticleServiceImpl implements ArticleService {
             if (list == null) {
                 return null;
             }
+            for (Article article : list) {
+                article.setCountLike(likeMapper.countByArticleId(article.getId()));
+                article.setCountReply(replyMapper.count(article.getId()));
+                article.setNickname(userMapper.findById(article.getUserId()).getNickname());
+                article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+            }
             pager.setTotal(articleMapper.countByTitleAll(title));
             pager.setRows(list);
             return pager;
@@ -207,6 +274,34 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 通过id获取文章和附加信息
+     * @param id
+     * @param userId
+     * @return
+     */
+    @Override
+    public Article getById(String id, String userId) {
+        if (id == null || id.equals("")) {
+            return null;
+        }
+        try {
+            Article article = articleMapper.getById(id);
+            article.setCountLike(likeMapper.countByArticleId(article.getId()));
+            article.setCountReply(replyMapper.count(article.getId()));
+            article.setNickname(userMapper.findById(article.getUserId()).getNickname());
+            article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+            return article;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 通过id获取文章
+     * @param id
+     * @return
+     */
     @Override
     public Article getById(String id) {
         if (id == null || id.equals("")) {
@@ -219,6 +314,11 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
+    /**
+     * 增加文章访问量
+     * TODO
+     * @param id
+     */
     @Override
     public void visit(String id) {
         if (id == null || id.equals("")) {

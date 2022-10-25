@@ -6,7 +6,7 @@ import ink.wyy.bean.Pager;
 
 public interface ArticleService {
 
-    Pager<Article> getList(String boardId, Pager<Article> pager, String order);
+    Pager<Article> getList(String boardId, Pager<Article> pager, String order, String userId);
 
     APIResult insert(Article article);
 
@@ -14,9 +14,11 @@ public interface ArticleService {
 
     APIResult delete(String id);
 
-    Pager<Article> findByTitle(String title, String boardId, Pager<Article> pager, String order);
+    Pager<Article> findByTitle(String title, String boardId, Pager<Article> pager, String order, String userId);
 
-    Pager<Article> findAll(String title, Pager<Article> pager, String order);
+    Pager<Article> findAll(String title, Pager<Article> pager, String order, String userId);
+
+    Article getById(String id, String userId);
 
     Article getById(String id);
 

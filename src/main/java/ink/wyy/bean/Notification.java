@@ -63,7 +63,15 @@ public class Notification {
         isRead = read;
     }
 
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    public boolean getRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        isRead = read;
+    }
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     public Date getNoticeTime() {
         return noticeTime;
     }

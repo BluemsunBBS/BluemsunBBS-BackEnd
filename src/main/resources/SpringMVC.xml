@@ -79,4 +79,8 @@
         />
     </mvc:cors>
 
+    <!-- _____________________________________________ -->
+    
+    <import resource="redis-context.xml" />
+
 </beans>

@@ -45,7 +45,7 @@ public class AuthorInterceptor implements HandlerInterceptor {
                 Map pathVariables = (Map) request.getAttribute(
                         HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
                 String id = (String)pathVariables.get("articleId");
-                Article article = articleService.getById(id);
+                Article article = articleService.getById(id, user.getId());
                 if (article == null) {
                     PrintWriter writer = response.getWriter();
                     writer.print(JSONUtil.toJSONString(APIResult.createNg("帖子不存在")));

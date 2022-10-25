@@ -15,4 +15,6 @@ public interface ReplyService {
     APIResult delete(String id);
 
     Reply getById(String id);
+
+    int countByArticle(String articleId);
 }

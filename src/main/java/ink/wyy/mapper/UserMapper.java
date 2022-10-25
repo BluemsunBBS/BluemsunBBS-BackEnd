@@ -44,4 +44,11 @@ public interface UserMapper {
 
     @Select("select * from tb_user where username=#{username} and ban=0")
     User findByUsername(String username) throws Exception;
+
+    @Select("select * from tb_user where nickname like #{key} and ban=0 limit #{p.begin},#{p.size}")
+    List<User> searchByNickname(@Param("key") String key,
+                                @Param("p") Pager<User> pager) throws Exception;
+
+    @Select("select COUNT(1) from tb_user where nickname like #{key} and ban=0")
+    int countByNickname(String key);
 }

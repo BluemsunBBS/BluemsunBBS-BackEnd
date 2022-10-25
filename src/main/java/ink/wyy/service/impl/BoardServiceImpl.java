@@ -25,6 +25,11 @@ public class BoardServiceImpl implements BoardService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * 添加板块
+     * @param board
+     * @return
+     */
     @Override
     public APIResult insert(Board board) {
         if (board.getName() == null || board.getName().equals("")) {
@@ -42,6 +47,11 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+    /**
+     * 更新板块信息
+     * @param board
+     * @return
+     */
     @Override
     public APIResult update(Board board) {
         Board old;
@@ -72,6 +82,11 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+    /**
+     * 删除板块
+     * @param id
+     * @return
+     */
     @Override
     public APIResult delete(String id) {
         try {
@@ -86,6 +101,11 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+    /**
+     * 获取板块列表
+     * @param pager
+     * @return
+     */
     @Override
     public Pager<Board> getList(Pager<Board> pager) {
         if (pager.getSize() == 0) pager.setSize(20);
@@ -100,6 +120,12 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+    /**
+     * 查找板块
+     * @param name
+     * @param pager
+     * @return
+     */
     @Override
     public Pager<Board> find(String name, Pager<Board> pager) {
         if (pager.getSize() == 0) pager.setSize(20);
@@ -108,13 +134,18 @@ public class BoardServiceImpl implements BoardService {
         try {
             List<Board> list = boardMapper.find(name, pager);
             pager.setRows(list);
-            pager.setTotal(boardMapper.count());
+            pager.setTotal(boardMapper.countByName(name));
             return pager;
         } catch (Exception e) {
             return null;
         }
     }
 
+    /**
+     * 通过id获取板块
+     * @param id
+     * @return
+     */
     @Override
     public Board getById(String id) {
         try {
@@ -124,6 +155,12 @@ public class BoardServiceImpl implements BoardService {
         }
     }
 
+    /**
+     * 添加主持人
+     * @param userId
+     * @param boardId
+     * @return
+     */
     @Override
     public APIResult addHost(String userId, String boardId) {
         if (userId == null || userId.equals("")) {
@@ -148,11 +185,23 @@ public class BoardServiceImpl implements BoardService {
         return APIResult.createNg("添加主持人失败");
     }
 
+    /**
+     * 检查主持人身份
+     * @param userId
+     * @param boardId
+     * @return
+     */
     @Override
     public boolean checkHost(String userId, String boardId) {
         return boardMapper.checkHost(userId, boardId) > 0;
     }
 
+    /**
+     * 删除主持人
+     * @param userId
+     * @param boardId
+     * @return
+     */
     @Override
     public APIResult deleteHost(String userId, String boardId) {
         if (userId == null || userId.equals("")) {
@@ -165,7 +214,7 @@ public class BoardServiceImpl implements BoardService {
             Board board = getById(boardId);
             notificationService.insert(new Notification(
                     "system",
-                    "【用户权限变更通知】您已被取消板块\"" + board + "\"的主持人。",
+                    "【用户权限变更通知】您已被取消板块\"" + board.getName() + "\"的主持人。",
                     userId
             ));
             return APIResult.createOk("撤销主持人成功");
@@ -173,6 +222,11 @@ public class BoardServiceImpl implements BoardService {
         return APIResult.createNg("该用户不是此板块主持人");
     }
 
+    /**
+     * 通过板块id获得某板块主持人列表
+     * @param boardId
+     * @return
+     */
     @Override
     public APIResult getHostList(String boardId) {
         if (boardId == null || boardId.equals("")) {
