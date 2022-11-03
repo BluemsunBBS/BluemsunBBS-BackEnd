@@ -6,6 +6,7 @@ import ink.wyy.bean.Board;
 import ink.wyy.bean.Pager;
 import ink.wyy.bean.User;
 import ink.wyy.service.FollowService;
+import ink.wyy.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,11 +48,11 @@ public class FollowController {
         return APIResult.createOk(pager);
     }
 
-    @GetMapping("/follow/list")
-    public APIResult getListByUser(HttpServletRequest request,
+    @GetMapping("/follow/listBoard/{userId}")
+    public APIResult getListByUser(@PathVariable String userId,
+                                   HttpServletRequest request,
                                    Pager<Board> pager) {
-        User user = (User) request.getAttribute("user");
-        pager = followService.getListByUser(user.getId(), pager);
+        pager = followService.getListByUser(userId, pager);
         if (pager == null) {
             return APIResult.createNg("获取失败");
         }

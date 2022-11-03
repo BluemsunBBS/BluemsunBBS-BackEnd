@@ -7,6 +7,7 @@ import ink.wyy.bean.User;
 import ink.wyy.service.UserService;
 import ink.wyy.util.JSONUtil;
 import ink.wyy.util.JWTUtil;
+import ink.wyy.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -19,6 +20,9 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

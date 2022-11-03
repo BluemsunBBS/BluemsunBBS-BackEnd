@@ -28,8 +28,27 @@ public class Article {
     private Date createTime;
     @JsonProperty("update_time")
     private Date updateTime;
+    @JsonProperty("board_name")
+    private String boardName;
     private int visits;
     private Integer top;
+    private Integer approved;
+
+    public String getBoardName() {
+        return boardName;
+    }
+
+    public void setBoardName(String boardName) {
+        this.boardName = boardName;
+    }
+
+    public Integer getApproved() {
+        return approved == null ? 0 : approved;
+    }
+
+    public void setApproved(Integer approved) {
+        this.approved = approved;
+    }
 
     public Boolean getIsLike() {
         return isLike;

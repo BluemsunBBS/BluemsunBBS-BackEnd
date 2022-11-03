@@ -18,6 +18,10 @@ public interface ArticleService {
 
     Pager<Article> findAll(String title, Pager<Article> pager, String order, String userId);
 
+    Pager<Article> approvedList(String id, int state, Pager<Article> pager);
+
+    APIResult approve(String id, int state);
+
     Article getById(String id, String userId);
 
     Article getById(String id);

@@ -1,6 +1,7 @@
 package ink.wyy.service.impl;
 
 import ink.wyy.bean.*;
+import ink.wyy.mapper.ArticleMapper;
 import ink.wyy.mapper.BoardMapper;
 import ink.wyy.mapper.UserMapper;
 import ink.wyy.service.BoardService;
@@ -18,11 +19,14 @@ public class BoardServiceImpl implements BoardService {
     private final UserMapper userMapper;
     private final NotificationService notificationService;
 
+    private final ArticleMapper articleMapper;
+
     @Autowired
-    public BoardServiceImpl(BoardMapper boardMapper, UserMapper userMapper, NotificationService notificationService) {
+    public BoardServiceImpl(BoardMapper boardMapper, UserMapper userMapper, NotificationService notificationService, ArticleMapper articleMapper) {
         this.boardMapper = boardMapper;
         this.userMapper = userMapper;
         this.notificationService = notificationService;
+        this.articleMapper = articleMapper;
     }
 
     /**
@@ -108,12 +112,13 @@ public class BoardServiceImpl implements BoardService {
      */
     @Override
     public Pager<Board> getList(Pager<Board> pager) {
-        if (pager.getSize() == 0) pager.setSize(20);
-        if (pager.getPage() == 0) pager.setPage(1);
         try {
             List<Board> list = boardMapper.selectAll(pager);
             pager.setRows(list);
             pager.setTotal(boardMapper.count());
+            for (Board board : list) {
+                board.setArticleNum(articleMapper.count(board.getId()));
+            }
             return pager;
         } catch (Exception e) {
             return null;
@@ -128,8 +133,6 @@ public class BoardServiceImpl implements BoardService {
      */
     @Override
     public Pager<Board> find(String name, Pager<Board> pager) {
-        if (pager.getSize() == 0) pager.setSize(20);
-        if (pager.getPage() == 0) pager.setPage(1);
         name = '%' + name + '%';
         try {
             List<Board> list = boardMapper.find(name, pager);

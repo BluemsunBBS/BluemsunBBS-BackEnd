@@ -1,12 +1,11 @@
 package ink.wyy.controller;
 
 import ink.wyy.auth.AuthorAuth;
+import ink.wyy.auth.HostAuth;
 import ink.wyy.auth.LoginAuth;
-import ink.wyy.bean.APIResult;
-import ink.wyy.bean.Article;
-import ink.wyy.bean.Pager;
-import ink.wyy.bean.User;
+import ink.wyy.bean.*;
 import ink.wyy.service.ArticleService;
+import ink.wyy.service.NotificationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +20,12 @@ public class ArticleController {
 
     static Logger logger = LogManager.getLogger();
     private final ArticleService articleService;
+    private final NotificationService notificationService;
 
     @Autowired
-    public ArticleController(ArticleService articleService) {
+    public ArticleController(ArticleService articleService, NotificationService notificationService) {
         this.articleService = articleService;
+        this.notificationService = notificationService;
     }
 
     @PostMapping("/")
@@ -100,6 +101,39 @@ public class ArticleController {
         }
         return APIResult.createOk(pager);
     }
+
+    @GetMapping("/approve/list/{boardId}")
+    @HostAuth
+    public APIResult approvedList(@PathVariable String boardId, Pager<Article> pager) {
+        pager = articleService.approvedList(boardId, 0, pager);
+        if (pager == null) {
+            return APIResult.createNg("获取失败");
+        }
+        return APIResult.createOk(pager);
+    }
+
+    @GetMapping("/draft/list")
+    public APIResult draftList(HttpServletRequest request, Pager<Article> pager) {
+        User user = (User) request.getAttribute("user");
+        pager = articleService.approvedList(user.getId(), 2, pager);
+        if (pager == null) {
+            return APIResult.createNg("获取失败");
+        }
+        return APIResult.createOk(pager);
+    }
+
+    @PutMapping("/approve/{articleId}")
+    @AuthorAuth
+    public APIResult approve(@PathVariable String articleId,
+                             HttpServletRequest request) {
+        String power = (String) request.getAttribute("power");
+        int state = 0;
+        if (!power.equals("user")) {
+            state = 1;
+        }
+        return articleService.approve(articleId, state);
+    }
+
 
     @GetMapping("/list")
     @LoginAuth(value = false)

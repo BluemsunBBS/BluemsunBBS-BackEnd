@@ -54,6 +54,9 @@ public class FriendServiceImpl implements FriendService {
     public Pager<User> getMyFollow(String userId, Pager<User> pager) {
         if (pager.getSize() == 0) pager.setSize(20);
         if (pager.getPage() == 0) pager.setPage(1);
+        if (userId == null || userId.equals("")) {
+            return null;
+        }
         List<User> list = friendMapper.getMyFollow(userId, pager);
         if (list == null) return null;
         pager.setRows(list);
@@ -71,6 +74,9 @@ public class FriendServiceImpl implements FriendService {
     public Pager<User> getFollowMe(String userId, Pager<User> pager) {
         if (pager.getSize() == 0) pager.setSize(20);
         if (pager.getPage() == 0) pager.setPage(1);
+        if (userId == null || userId.equals("")) {
+            return null;
+        }
         List<User> list = friendMapper.getFollowMe(userId, pager);
         if (list == null) return null;
         pager.setRows(list);

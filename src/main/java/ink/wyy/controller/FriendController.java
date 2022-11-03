@@ -21,30 +21,33 @@ public class FriendController {
         this.friendService = friendService;
     }
 
-    @GetMapping("/friend/friendList")
-    public APIResult getFriend(HttpServletRequest request, Pager<User> pager) {
-        User user = (User) request.getAttribute("user");
-        pager = friendService.getFriends(user.getId(), pager);
+    @GetMapping("/friend/friendList/{userId}")
+    public APIResult getFriend(HttpServletRequest request,
+                               Pager<User> pager,
+                               @PathVariable String userId) {
+        pager = friendService.getFriends(userId, pager);
         if (pager == null) {
             return APIResult.createNg("获取失败");
         }
         return APIResult.createOk(pager);
     }
 
-    @GetMapping("/friend/followList")
-    public APIResult getMyFollow(HttpServletRequest request, Pager<User> pager) {
-        User user = (User) request.getAttribute("user");
-        pager = friendService.getMyFollow(user.getId(), pager);
+    @GetMapping("/friend/followList/{userId}")
+    public APIResult getMyFollow(HttpServletRequest request,
+                                 Pager<User> pager,
+                                 @PathVariable String userId) {
+        pager = friendService.getMyFollow(userId, pager);
         if (pager == null) {
             return APIResult.createNg("获取失败");
         }
         return APIResult.createOk(pager);
     }
 
-    @GetMapping("/friend/fansList")
-    public APIResult getFollowMe(HttpServletRequest request, Pager<User> pager) {
-        User user = (User) request.getAttribute("user");
-        pager = friendService.getFollowMe(user.getId(), pager);
+    @GetMapping("/friend/fansList/{userId}")
+    public APIResult getFollowMe(HttpServletRequest request,
+                                 Pager<User> pager,
+                                 @PathVariable String userId) {
+        pager = friendService.getFollowMe(userId, pager);
         if (pager == null) {
             return APIResult.createNg("获取失败");
         }

@@ -11,11 +11,20 @@ public class Board {
     private String name;
     private String img;
     private String description;
+    @JsonProperty("article_num")
+    private Integer articleNum;
     @JsonProperty("create_time")
     private Date createTime;
     @JsonProperty("update_time")
     private Date updateTime;
 
+    public Integer getArticleNum() {
+        return articleNum;
+    }
+
+    public void setArticleNum(Integer articleNum) {
+        this.articleNum = articleNum;
+    }
 
     public String getId() {
         return id;

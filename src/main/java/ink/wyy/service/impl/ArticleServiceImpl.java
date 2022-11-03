@@ -6,6 +6,7 @@ import ink.wyy.mapper.LikeMapper;
 import ink.wyy.mapper.ReplyMapper;
 import ink.wyy.mapper.UserMapper;
 import ink.wyy.service.*;
+import ink.wyy.util.RedisUtil;
 import ink.wyy.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,17 +23,19 @@ public class ArticleServiceImpl implements ArticleService {
     private final LikeMapper likeMapper;
     private final ReplyMapper replyMapper;
     private final UserMapper userMapper;
+    private final RedisUtil redisUtil;
 
     @Autowired
     public ArticleServiceImpl(BoardService boardService,
                               ArticleMapper articleMapper,
-                              NotificationService notificationService, LikeMapper likeMapper, ReplyMapper replyMapper, UserMapper userMapper) {
+                              NotificationService notificationService, LikeMapper likeMapper, ReplyMapper replyMapper, UserMapper userMapper, RedisUtil redisUtil) {
         this.boardService = boardService;
         this.articleMapper = articleMapper;
         this.notificationService = notificationService;
         this.likeMapper = likeMapper;
         this.replyMapper = replyMapper;
         this.userMapper = userMapper;
+        this.redisUtil = redisUtil;
     }
 
     /**
@@ -45,17 +48,17 @@ public class ArticleServiceImpl implements ArticleService {
      */
     @Override
     public Pager<Article> getList(String boardId, Pager<Article> pager, String order, String userId) {
-        if (pager.getSize() == 0) pager.setSize(20);
-        if (pager.getPage() == 0) pager.setPage(1);
-        Board board;
-        try {
-            board = boardService.getById(boardId);
-        } catch (Exception e) {
-            return null;
-        }
-        if (board == null) {
-            return null;
-        }
+//        if (pager.getSize() == 0) pager.setSize(20);
+//        if (pager.getPage() == 0) pager.setPage(1);
+//        Board board;
+//        try {
+//            board = boardService.getById(boardId);
+//        } catch (Exception e) {
+//            return null;
+//        }
+//        if (board == null) {
+//            return null;
+//        }
         try {
             if (order == null || order.equals("")) {
                 order = "update_time desc";
@@ -68,6 +71,7 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setCountReply(replyMapper.count(article.getId()));
                     article.setNickname(userMapper.findById(article.getUserId()).getNickname());
                     article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+                    article.setBoardName(boardService.getById(article.getBoardId()).getName());
                 }
             }
             pager.setRows(list);
@@ -95,20 +99,18 @@ public class ArticleServiceImpl implements ArticleService {
             return APIResult.createNg("作者不能为空");
         }
         article.setId(UUIDUtil.get());
+        // 防止用户绕过审核
+        if (article.getApproved() == 1) {
+            article.setApproved(0);
+        }
         try {
             if (articleMapper.insert(article) == 1) {
-                article = articleMapper.getById(article.getId());
-                Board board = boardService.getById(article.getBoardId());
-                board.setUpdateTime(new Date());
-                List<User> hostList = (List<User>) boardService.getHostList(board.getId()).getData();
-                for (User user : hostList) {
-                    notificationService.insert(new Notification(
-                            "system",
-                            "【文章审核通知】板块\"" + board.getName() + "\" 新文章《" + article.getTitle() + "》发布了，请注意查看。",
-                            user.getId()
-                    ));
+                // 如果发布的是草稿，不进行通知
+                if (article.getApproved() == 3) {
+                    return APIResult.createOk(article);
                 }
-                boardService.update(board);
+                article = articleMapper.getById(article.getId());
+                noticeHost(article);
                 return APIResult.createOk(article);
             } else {
                 return APIResult.createNg("发布失败");
@@ -230,6 +232,7 @@ public class ArticleServiceImpl implements ArticleService {
                 article.setCountReply(replyMapper.count(article.getId()));
                 article.setNickname(userMapper.findById(article.getUserId()).getNickname());
                 article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+                article.setBoardName(board.getName());
             }
             pager.setTotal(articleMapper.countByTitle(boardId, title));
             pager.setRows(list);
@@ -249,8 +252,8 @@ public class ArticleServiceImpl implements ArticleService {
      */
     @Override
     public Pager<Article> findAll(String title, Pager<Article> pager, String order, String userId) {
-        if (pager.getSize() == 0) pager.setSize(20);
-        if (pager.getPage() == 0) pager.setPage(1);
+//        if (pager.getSize() == 0) pager.setSize(20);
+//        if (pager.getPage() == 0) pager.setPage(1);
         if (order == null || order.equals("")) {
             order = "update_time desc";
         }
@@ -265,12 +268,90 @@ public class ArticleServiceImpl implements ArticleService {
                 article.setCountReply(replyMapper.count(article.getId()));
                 article.setNickname(userMapper.findById(article.getUserId()).getNickname());
                 article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+                article.setBoardName(boardService.getById(article.getBoardId()).getName());
             }
             pager.setTotal(articleMapper.countByTitleAll(title));
             pager.setRows(list);
             return pager;
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * 通过用户id或板块id获取该用户的草稿箱或该板块的待审核文章
+     * @param id
+     * @param state
+     * @param pager
+     * @return
+     */
+    @Override
+    public Pager<Article> approvedList(String id, int state, Pager<Article> pager) {
+        if (id == null || id.equals("")) {
+            return null;
+        }
+        try {
+            List<Article> list = articleMapper.approvedList(id, state, pager);
+            if (list == null) {
+                return null;
+            }
+            for (Article article : list) {
+                article.setNickname(userMapper.findById(article.getUserId()).getNickname());
+                article.setBoardName(boardService.getById(article.getBoardId()).getName());
+            }
+            pager.setTotal(articleMapper.countApproved(id, state));
+            pager.setRows(list);
+            return pager;
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    /**
+     * 审核文章或从草稿箱中发布文章
+     * @param id
+     * @param state
+     * @return
+     */
+    @Override
+    public APIResult approve(String id, int state) {
+        if (id == null || id.equals("")) {
+            return APIResult.createNg("id不能为空");
+        }
+        try {
+            if (articleMapper.setApprove(id, state) == 1) {
+                Article article = articleMapper.getById(id);
+                if (state == 1) {
+                    User user = userMapper.findById(article.getUserId());
+                    notificationService.insert(new Notification(
+                            "system",
+                            "【审核通过通知】您的文章《" + article.getTitle() + "》审核通过。",
+                            user.getId()
+                    ));
+                    return APIResult.createOk("审核成功");
+                } else {
+                    noticeHost(article);
+                    return APIResult.createOk("发布成功");
+                }
+            }
+            return APIResult.createNg("失败");
+        } catch (Exception e) {
+            return APIResult.createNg(e.getMessage());
+        }
+    }
+
+    private void noticeHost(Article article) {
+        Board board = boardService.getById(article.getBoardId());
+        board.setUpdateTime(new Date());
+        boardService.update(board);
+        List<User> hostList = (List<User>) boardService.getHostList(board.getId()).getData();
+        for (User user : hostList) {
+            notificationService.insert(new Notification(
+                    "system",
+                    "【文章审核通知】板块\"" + board.getName() + "\" 新文章《" + article.getTitle() + "》发布了，请即时审核。",
+                    user.getId()
+            ));
         }
     }
 
@@ -287,10 +368,14 @@ public class ArticleServiceImpl implements ArticleService {
         }
         try {
             Article article = articleMapper.getById(id);
+            if (article.getApproved() != 1 && !article.getUserId().equals(userId)) {
+                return null;
+            }
             article.setCountLike(likeMapper.countByArticleId(article.getId()));
             article.setCountReply(replyMapper.count(article.getId()));
             article.setNickname(userMapper.findById(article.getUserId()).getNickname());
             article.setIsLike(likeMapper.check(userId, article.getId()) == 1);
+            article.setBoardName(boardService.getById(article.getBoardId()).getName());
             return article;
         } catch (Exception e) {
             return null;
@@ -308,7 +393,9 @@ public class ArticleServiceImpl implements ArticleService {
             return null;
         }
         try {
-            return articleMapper.getById(id);
+            Article article = articleMapper.getById(id);
+            if (article.getApproved() != 1) return null;
+            return article;
         } catch (Exception e) {
             return null;
         }
@@ -325,7 +412,13 @@ public class ArticleServiceImpl implements ArticleService {
             return;
         }
         try {
-            articleMapper.visit(id);
+            int num = Integer.parseInt(redisUtil.get("articleVisit", id));
+            redisUtil.set("articleVisit", id, String.valueOf(num + 1));
+            int oldNum = Integer.parseInt(redisUtil.get("articleVisitOld", id));
+            if (1.0 * Math.abs(oldNum - num) / num > 0.05) {
+                redisUtil.set("articleVisitOld", id, String.valueOf(num + 1));
+                articleMapper.visit(id, num + 1);
+            }
         } catch (Exception ignored) {
         }
     }

@@ -77,15 +77,17 @@ public class LikeServiceImpl implements LikeService {
             return APIResult.createNg("不能重复点赞");
         }
         if (likeMapper.like(userId, articleId) == 1) {
-            User user = userService.getById(userId);
             Article article = articleService.getById(articleId);
-            notificationService.insert(new Notification(
-                    "like",
-                    "用户<a href='/user/" + userId + "'>" +
-                        (user.getNickname() != null ? user.getNickname() : user.getUsername()) + "</a>" +
-                        "点赞了你的文章<a href='/article/" + articleId + "'>《" + article.getTitle() + "》</a>",
-                    article.getUserId()
-            ));
+            if (!userId.equals(article.getUserId())) {
+                User user = userService.getById(userId);
+                notificationService.insert(new Notification(
+                        "like",
+                        "用户<a href='/user/" + userId + "'>" +
+                                (user.getNickname() != null ? user.getNickname() : user.getUsername()) + "</a>" +
+                                "点赞了你的文章<a href='/article/" + articleId + "'>《" + article.getTitle() + "》</a>",
+                        article.getUserId()
+                ));
+            }
             return APIResult.createOk("点赞成功");
         }
         return APIResult.createNg("点赞失败");

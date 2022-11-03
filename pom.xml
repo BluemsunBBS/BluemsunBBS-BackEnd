@@ -90,6 +90,11 @@
             <artifactId>spring-data-redis</artifactId>
             <version>1.8.9.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-websocket</artifactId>
+            <version>5.2.22.RELEASE</version>
+        </dependency>
     </dependencies>
     <build>
         <finalName>BluemsunBBS</finalName>
